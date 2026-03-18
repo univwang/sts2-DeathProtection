@@ -1,0 +1,11 @@
+{
+  "id": "DeathProtection",
+  "name": "Death Protection",
+  "author": "ModAuthor",
+  "description": "在玩家即将死亡时提供保护：回到主页面或自动重开，防止突然暴毙",
+  "version": "v1.0.0",
+  "has_pck": true,
+  "has_dll": true,
+  "dependencies": [],
+  "affects_gameplay": true
+}
