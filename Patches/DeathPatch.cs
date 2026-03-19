@@ -8,6 +8,8 @@ using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.Helpers;
+using MegaCrit.Sts2.Core.Hooks;
+using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Multiplayer;
 using MegaCrit.Sts2.Core.Multiplayer.Game;
 using MegaCrit.Sts2.Core.Nodes;
@@ -94,7 +96,24 @@ public static class DeathProtectionPatch
             return true; // 不是所有玩家死亡，允许原始方法执行
         }
 
-        MainFile.Logger.Info("[DeathProtection] All players will die! Activating protection...");
+        // 检查是否有遗物/药水可以阻止死亡（如蜥蜴尾巴、瓶中精灵等）
+        // 如果有任何玩家可以被遗物/药水救活，让原始方法执行
+        CombatState? combatState = creatures.FirstOrDefault()?.CombatState;
+        foreach (var player in runState.Players)
+        {
+            if (player.Creature.IsDead || creatures.Contains(player.Creature))
+            {
+                // 检查是否有遗物/药水可以阻止死亡
+                bool shouldDie = Hook.ShouldDie(runState, combatState, player.Creature, out AbstractModel? preventer);
+                if (!shouldDie)
+                {
+                    MainFile.Logger.Info($"Player can be saved by {preventer?.GetType().Name}, allowing game logic to proceed.");
+                    return true; // 有遗物/药水可以救活，让原始方法执行
+                }
+            }
+        }
+
+        MainFile.Logger.Info("[DeathProtection] All players will die and no relics/potions can save them! Activating protection...");
 
         // 标记正在保护
         _isProtecting = true;
